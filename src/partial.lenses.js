@@ -745,6 +745,29 @@ const pickInAux = (t, k) => [k, pickIn(t)]
 const condOfDefault = I.always(zeroOp)
 const condOfCase = (p, o, r) => (y, j) => (p(y, j) ? o : r(y, j))
 
+//
+
+const iteratePartial = aa => a => {
+  let r = a
+  while (a !== undefined) {
+    r = a
+    a = aa(a)
+  }
+  return r
+}
+
+const crossPartial = xys => xs => {
+  const n = xys.length
+  if (I.isArray(xs) && n === xs.length) {
+    const ys = Array(n)
+    for (let i = 0; i < n; ++i) {
+      const x = xs[i]
+      if (void 0 === x || void 0 === (ys[i] = xys[i](x))) return
+    }
+    return ys
+  }
+}
+
 // Auxiliary
 
 export const seemsArrayLike = x =>
@@ -1491,8 +1514,32 @@ export const array = elem => {
   return (x, i, F, xi2yF) => F.map(mapFwd, xi2yF(mapIfArrayLike(bwd, x), i))
 }
 
+export const cross = (process.env.NODE_ENV === 'production'
+  ? I.id
+  : fn =>
+      function() {
+        return toFunction([
+          isoU(I.id, I.freeze),
+          fn.apply(null, arguments),
+          isoU(I.freeze, I.id)
+        ])
+      })(function() {
+  const n = arguments.length
+  const bwd = Array(n)
+  const fwd = Array(n)
+  for (let i = 0; i < n; ++i) {
+    const iso = arguments[i]
+    bwd[i] = get(iso)
+    fwd[i] = getInverse(iso)
+  }
+  return isoU(crossPartial(bwd), crossPartial(fwd))
+})
+
 export const inverse = iso => (x, i, F, xi2yF) =>
   F.map(x => getU(iso, x), xi2yF(setU(iso, x, void 0), i))
+
+export const iterate = aIa =>
+  isoU(iteratePartial(get(aIa)), iteratePartial(getInverse(aIa)))
 
 // Basic isomorphisms
 

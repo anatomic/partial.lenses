@@ -355,7 +355,9 @@ export const iso = T.fn(
 // Isomorphism combinators
 
 export const array = T.fn([T_isomorphism], T_isomorphism)
+export const cross = T.fnVarN(0, T_isomorphism, T_isomorphism)
 export const inverse = T.fn([T_isomorphism], T_isomorphism)
+export const iterate = T.fn([T_isomorphism], T_isomorphism)
 
 // Basic isomorphisms
 

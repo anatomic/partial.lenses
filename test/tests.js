@@ -232,6 +232,7 @@ describe('arities', () => {
     countIf: 3,
     counts: 2,
     countsAs: 3,
+    cross: 0,
     defaults: 1,
     define: 1,
     divide: 1,
@@ -262,6 +263,7 @@ describe('arities', () => {
     isDefined: 2,
     isEmpty: 2,
     iso: 2,
+    iterate: 1,
     join: 3,
     joinAs: 4,
     json: 1,
@@ -1765,6 +1767,13 @@ describe('L.array', () => {
     'N',
     'G'
   ])
+})
+
+describe('L.cross', () => {
+  testEq(() => L.get(L.cross(), []), [])
+  testEq(() => L.get(L.cross(), 'not an array'), undefined)
+  testEq(() => L.get(L.cross(L.negate, L.add(2)), [1, 2]), [-1, 4])
+  testEq(() => L.getInverse(L.cross(L.negate, L.add(2)), [1, 2]), [-1, 0])
 })
 
 describe('L.forEach', () => {
