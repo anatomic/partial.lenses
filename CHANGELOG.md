@@ -1,5 +1,30 @@
 # Partial Lenses Changelog
 
+## 13.14.0
+
+Obsoleted `L.pickIn`, `L.props`, and `L.propsOf`.  They are based on `L.pick`,
+which uses lenses and requires super linear time when written through.  The new
+`L.attrs`, `L.attrsNamed`, and `L.attrsOf` work in linear time and differ from
+them in the handling of empty results and removal, because they are designed to
+work symmetrically as isomorphisms, but in most cases you should be able to just
+replace uses of `L.pickIn` with `L.attrs`, `L.props` with `L.attrsNamed`, and
+`L.propsOf` with `L.attrsOf`:
+
+```diff
+-L.pickIn(template)
++L.attrs(template)
+```
+
+```diff
+-L.props(...propNames)
++L.attrsNamed(...propNames)
+```
+
+```diff
+-L.propsOf(object)
++L.attrsOf(object)
+```
+
 ## 13.10.0
 
 There is no longer guarantee that optic operations return newly allocated data

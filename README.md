@@ -169,10 +169,15 @@ parts.  [Try Lenses!](https://calmm-js.github.io/partial.lenses/playground.html)
       * [`L.slice(maybeBegin, maybeEnd) ~> lens`](#L-slice "L.slice: Maybe Number -> Maybe Number -> PLens [a] [a]") <small><sup>v8.1.0</sup></small>
       * [`L.suffix(maybeEnd) ~> lens`](#L-suffix "L.suffix: Maybe Number -> PLens [a] [a]") <small><sup>v11.12.0</sup></small>
     * [Lensing objects](#lensing-objects)
-      * [`L.pickIn({prop: lens, ...props}) ~> lens`](#L-pickIn "L.pickIn: {p1: PLens s1 a1, ...pls} -> PLens {p1: s1, ...pls} {p1: a1, ...pls}") <small><sup>v11.11.0</sup></small>
+      * [`L.attrs({prop: lens, ...props}) ~> lens`](#L-attrs "L.attrs: {p1: PLens s1 a1, ...pls} -> PLens {p1: s1, ...pls} {p1: a1, ...pls}") <small><sup>v13.14.0</sup></small>
+      * [`L.attrsNamed(...propNames) ~> lens`](#L-attrsNamed "L.attrsNamed: (p1: a1, ...ps) -> PLens {p1: a1, ...ps, ...o} {p1: a1, ...ps}") <small><sup>v13.14.0</sup></small>
+      * [`L.attrsOf(object) ~> lens`](#L-attrsOf "L.attrsOf: {p1: a1, ...ps} -> PLens {p1: a1, ...ps, ...o} {p1: a1, ...ps}") <small><sup>v13.14.0</sup></small>
+      * [`L.attrsOr(lens, {prop: lens, ...props}) ~> lens`](#L-attrsOr "L.attrsOr: PLens s a -> {p1: PLens s1 a1, ...pls} -> PLens {p1: s1, ...pls, ...p: s} {p1: a1, ...pls, ...p: a}") <small><sup>v13.14.0</sup></small>
+      * [`L.object(lens) ~> lens`](#L-object "L.object: PLens s a -> PLens {...p: s} {...p: a}") <small><sup>v13.14.0</sup></small>
+      * ~~[`L.pickIn({prop: lens, ...props}) ~> lens`](#L-pickIn "L.pickIn: {p1: PLens s1 a1, ...pls} -> PLens {p1: s1, ...pls} {p1: a1, ...pls}") <small><sup>v11.11.0</sup></small>~~
       * [`L.prop(propName) ~> lens`](#L-prop "L.prop: (p: a) -> PLens {p: a, ...ps} a") or `propName` <small><sup>v1.0.0</sup></small>
-      * [`L.props(...propNames) ~> lens`](#L-props "L.props: (p1: a1, ...ps) -> PLens {p1: a1, ...ps, ...o} {p1: a1, ...ps}") <small><sup>v1.4.0</sup></small>
-      * [`L.propsOf(object) ~> lens`](#L-propsOf "L.propsOf: {p1: a1, ...ps} -> PLens {p1: a1, ...ps, ...o} {p1: a1, ...ps}") <small><sup>v11.13.0</sup></small>
+      * ~~[`L.props(...propNames) ~> lens`](#L-props "L.props: (p1: a1, ...ps) -> PLens {p1: a1, ...ps, ...o} {p1: a1, ...ps}") <small><sup>v1.4.0</sup></small>~~
+      * ~~[`L.propsOf(object) ~> lens`](#L-propsOf "L.propsOf: {p1: a1, ...ps} -> PLens {p1: a1, ...ps, ...o} {p1: a1, ...ps}") <small><sup>v11.13.0</sup></small>~~
       * [`L.removable(...propNames) ~> lens`](#L-removable "L.removable: (p1: a1, ...ps) -> PLens {p1: a1, ...ps, ...o} {p1: a1, ...ps, ...o}") <small><sup>v9.2.0</sup></small>
     * [Lensing strings](#lensing-strings)
       * [`L.matches(/.../) ~> lens`](#L-matches "L.matches: RegExp -> PLens String String") <small><sup>v10.4.0</sup></small>
@@ -1895,7 +1900,7 @@ See the [BST traversal](#bst-traversal) section for a more meaningful example.
 `L.branchOr` creates a new traversal from a given traversal and a given possibly
 nested template object.  The template specifies how the new traversal should
 visit the corresponding properties of an object.  The separate traversal is used
-for properties not defined in the template.
+for properties not defined in the template.  See also [`L.attrsOr`](#L-attrsOr).
 
 For example:
 
@@ -3199,7 +3204,97 @@ When creating new objects, partial lenses generally ignore everything but own
 string keys.  In particular, properties from the prototype chain are not copied
 and neither are properties with symbol keys.
 
-##### <a id="L-pickIn"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses/index.html#L-pickIn) [`L.pickIn({prop: lens, ...props}) ~> lens`](#L-pickIn "L.pickIn: {p1: PLens s1 a1, ...pls} -> PLens {p1: s1, ...pls} {p1: a1, ...pls}") <small><sup>v11.11.0</sup></small>
+##### <a id="L-attrs"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses/index.html#L-attrs) [`L.attrs({prop: lens, ...props}) ~> lens`](#L-attrs "L.attrs: {p1: PLens s1 a1, ...pls} -> PLens {p1: s1, ...pls} {p1: a1, ...pls}") <small><sup>v13.14.0</sup></small>
+
+`L.attrs` creates a lens or isomorphism from a given possibly nested template of
+lenses or isomorphisms to be used on the corresponding properties of an object
+structure.  Other properties in the manipulated object structure are ignored.
+
+For example:
+
+```js
+L.get(
+  L.attrs({x: L.negate, y: L.add(1)}),
+  {x: 1, y: -2, z: 3}
+)
+// {x: -1, y: -1}
+```
+
+Note that `L.attrs` is equivalent to [`L.attrsOr(L.zero)`](#L-attrsOr).
+
+##### <a id="L-attrsNamed"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses/index.html#L-attrsNamed) [`L.attrsNamed(...propNames) ~> lens`](#L-attrsNamed "L.attrsNamed: (p1: a1, ...ps) -> PLens {p1: a1, ...ps, ...o} {p1: a1, ...ps}") <small><sup>v13.14.0</sup></small>
+
+`L.attrsNamed` focuses on a subset of properties of an object, allowing one to
+treat the subset of properties as a unit.  The view of `L.attrsNamed` is
+`undefined` when the focus is not an object.  Otherwise the view is an object
+containing a subset of the properties.  Setting through `L.attrsNamed` updates
+the whole subset of properties, which means that any missing properties are
+removed if they did exists previously.  When set, any extra properties are
+ignored.
+
+```js
+L.set(L.attrsNamed('x', 'y'), {x: 4}, {x: 1, y: 2, z: 3})
+// { x: 4, z: 3 }
+```
+
+Note that `L.attrsNamed(k1, ..., kN)` is equivalent to [`L.attrs({[k1]: [], ...,
+[kN]: []})`](#L-attrs).
+
+##### <a id="L-attrsOf"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses/index.html#L-attrsOf) [`L.attrsOf(object) ~> lens`](#L-attrsOf "L.attrsOf: {p1: a1, ...ps} -> PLens {p1: a1, ...ps, ...o} {p1: a1, ...ps}") <small><sup>v13.14.0</sup></small>
+
+`L.attrsOf(o)` is shorthand for
+[`L.attrsNamed(...Object.keys(o))`](#L-attrsNamed) allowing one to focus on the
+properties specified via the given sample object.
+
+##### <a id="L-attrsOr"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses/index.html#L-attrsOr) [`L.attrsOr(lens, {prop: lens, ...props}) ~> lens`](#L-attrsOr "L.attrsOr: PLens s a -> {p1: PLens s1 a1, ...pls} -> PLens {p1: s1, ...pls, ...p: s} {p1: a1, ...pls, ...p: a}") <small><sup>v13.14.0</sup></small>
+
+`L.attrsOr` creates a lens or isomorphism from a given possibly nested template
+of lenses or isomorphisms to be used on the corresponding properties of an
+object structure and a default lens to be used on other properties.  See also
+[`L.branchOr`](#L-branchOr).
+
+```js
+L.getInverse(
+  L.attrsOr(L.identity, {x: L.negate, y: L.add(1)}),
+  {x: -1, y: -1}
+)
+// {x: 1, y: -2}
+```
+
+Note that [`L.attrs`](#L-attrs) is equivalent to `L.attrsOr(L.zero)` and
+[`L.object(lens)`](#L-object) is equivalent to `L.attrsOr(lens, {})`.
+
+##### <a id="L-object"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses/index.html#L-object) [`L.object(lens) ~> lens`](#L-object "L.object: PLens s a -> PLens {...p: s} {...p: a}") <small><sup>v13.14.0</sup></small>
+
+`L.object` lifts a lens or isomorphism between elements, `a ≅ b`, to a lens or
+isomorphism between objects, `{...p: a} ≅ {...p: b}`.  See also
+[`L.array`](#L-array).
+
+For example:
+
+```js
+L.get(
+  L.object(L.array(L.negate)),
+  {xs: [1, -2, 3], ys: [-1, 2, -3]}
+)
+// {xs: [-1, 2, -3], ys: [1, -2, 3]}
+```
+
+```js
+L.set(
+  [L.object(L.array(L.negate)), 'xs', L.append],
+  4,
+  {xs: [1, -2, 3], ys: [-1, 2, -3]}
+)
+// {xs: [1, -2, 3, -4], ys: [-1, 2, -3]}
+```
+
+Note that `L.object(lens)` is equivalent to [`L.attrsOr(lens, {})`](#L-attrsOr).
+
+##### <a id="L-pickIn"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses/index.html#L-pickIn) ~~[`L.pickIn({prop: lens, ...props}) ~> lens`](#L-pickIn "L.pickIn: {p1: PLens s1 a1, ...pls} -> PLens {p1: s1, ...pls} {p1: a1, ...pls}") <small><sup>v11.11.0</sup></small>~~
+
+**WARNING: `L.pickIn` has been obsoleted.  Consider using [`L.attrs`](#L-attrs)
+instead.  See [CHANGELOG](./CHANGELOG.md#13130) for details.**
 
 `L.pickIn` creates a lens from the given possibly nested object template of
 lenses similar to [`L.pick`](#L-pick) except that the lenses in the template are
@@ -3245,7 +3340,11 @@ L.set([L.rewrite(objectTo(XYZ)), 'z'], 3, new XYZ(3, 1, 4))
 // XYZ { x: 3, y: 1, z: 3 }
 ```
 
-##### <a id="L-props"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses/index.html#L-props) [`L.props(...propNames) ~> lens`](#L-props "L.props: (p1: a1, ...ps) -> PLens {p1: a1, ...ps, ...o} {p1: a1, ...ps}") <small><sup>v1.4.0</sup></small>
+##### <a id="L-props"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses/index.html#L-props) ~~[`L.props(...propNames) ~> lens`](#L-props "L.props: (p1: a1, ...ps) -> PLens {p1: a1, ...ps, ...o} {p1: a1, ...ps}") <small><sup>v1.4.0</sup></small>~~
+
+**WARNING: `L.props` has been obsoleted.  Consider using
+[`L.attrsNamed`](#L-attrsNamed) instead.  See [CHANGELOG](./CHANGELOG.md#13130)
+for details.**
 
 `L.props` focuses on a subset of properties of an object, allowing one to treat
 the subset of properties as a unit.  The view of `L.props` is `undefined` when
@@ -3263,7 +3362,11 @@ L.set(L.props('x', 'y'), {x: 4}, {x: 1, y: 2, z: 3})
 Note that `L.props(k1, ..., kN)` is equivalent to [`L.pick({[k1]: k1, ..., [kN]:
 kN})`](#L-pick) and [`L.pickIn({[k1]: [], ..., [kN]: []})`](#L-pickIn).
 
-##### <a id="L-propsOf"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses/index.html#L-propsOf) [`L.propsOf(object) ~> lens`](#L-propsOf "L.propsOf: {p1: a1, ...ps} -> PLens {p1: a1, ...ps, ...o} {p1: a1, ...ps}") <small><sup>v11.13.0</sup></small>
+##### <a id="L-propsOf"></a> [≡](#contents) [▶](https://calmm-js.github.io/partial.lenses/index.html#L-propsOf) ~~[`L.propsOf(object) ~> lens`](#L-propsOf "L.propsOf: {p1: a1, ...ps} -> PLens {p1: a1, ...ps, ...o} {p1: a1, ...ps}") <small><sup>v11.13.0</sup></small>~~
+
+**WARNING: `L.propsOf` has been obsoleted.  Consider using
+[`L.attrsOf`](#L-attrsOf) instead.  See [CHANGELOG](./CHANGELOG.md#13130) for
+details.**
 
 `L.propsOf(o)` is shorthand for [`L.props(...Object.keys(o))`](#L-props)
 allowing one to focus on the properties specified via the given sample object.
@@ -3516,7 +3619,7 @@ L.modify([L.uriComponent,
 
 `L.array` lifts an isomorphism between elements, `a ≅ b`, to an isomorphism
 between an [array-like](#array-like) object and an array of elements, `[a] ≅
-[b]`.
+[b]`.  See also [`L.object`](#L-object).
 
 For example:
 
@@ -3970,14 +4073,15 @@ requirement is to implement it in the lenses that are used to access the
 `maximum` and `initial` values.  This way the UI components that allows the user
 to edit those values can be dumb and do not need to know about the restrictions.
 
-One way to build such a lens is to use a combination of [`L.props`](#L-props)
-(or, in more complex cases, [`L.pick`](#L-pick)) to limit the set of properties
-to deal with, and [`L.rewrite`](#L-rewrite) to insert the desired restriction
-logic.  Here is how it could look like for the `maximum`:
+One way to build such a lens is to use a combination of
+[`L.attrsNamed`](#L-attrsNamed) (or, in more complex cases, [`L.pick`](#L-pick))
+to limit the set of properties to deal with, and [`L.rewrite`](#L-rewrite) to
+insert the desired restriction logic.  Here is how it could look like for the
+`maximum`:
 
 ```js
 const maximum = [
-  L.props('maximum', 'initial'),
+  L.attrsNamed('maximum', 'initial'),
   L.rewrite(props => {
     const {maximum, initial} = props
     if (maximum < initial)
@@ -5010,7 +5114,7 @@ We can now remove the `extra` `fields` like this:
 
 ``` js
 transform(R.ifElse(R.allPass([R.is(Object), R.complement(R.is(Array))]),
-                   L.remove(L.props('extra', 'fields')),
+                   L.remove(L.attrsNamed('extra', 'fields')),
                    R.identity),
           sampleBloated)
 // { just: 'some',

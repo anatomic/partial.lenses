@@ -219,6 +219,10 @@ describe('arities', () => {
     array: 1,
     assign: 3,
     assignOp: 1,
+    attrs: 1,
+    attrsNamed: 0,
+    attrsOf: 1,
+    attrsOr: 2,
     branch: 1,
     branchOr: 2,
     branches: 0,
@@ -295,6 +299,7 @@ describe('arities', () => {
     negate: 4,
     none: 3,
     normalize: 1,
+    object: 1,
     optional: 4,
     or: 2,
     orElse: 2,
@@ -1123,6 +1128,65 @@ describe('L.pickIn', () => {
       }),
     {meta: {file: './foo.txt', ext: 'txt'}}
   )
+  testEq(() => L.remove(L.pickIn({x: L.negate}), {x: 1}), {})
+  testEq(() => L.get(L.pickIn({x: L.negate}), {}), undefined)
+})
+
+describe('L.attrsOr', () => {
+  testEq(() => L.set(L.attrsOr(L.zero, {}), {}, {x: 1}), {x: 1})
+  testEq(() => L.get(L.attrsOr(L.zero, {}), {y: 1}), {})
+  testEq(() => L.get(L.attrsOr(L.negate, {x: L.add(1)}), {x: 1, y: 2}), {
+    x: 2,
+    y: -2
+  })
+  testEq(
+    () => L.set([L.attrsOr(L.negate, {x: L.add(1)}), 'x'], -2, {x: 1, y: 2}),
+    {x: -3, y: 2}
+  )
+  testEq(
+    () =>
+      L.set(
+        L.attrsOr(L.negate, {x: L.add(1), z: L.subtract(1)}),
+        {x: -2, z: 1},
+        {x: 1, y: 2}
+      ),
+    {x: -3, z: 2}
+  )
+  testEq(
+    () => L.remove(L.attrsOr(L.negate, {x: L.add(1)}), {x: 1, y: 2}),
+    undefined
+  )
+  testEq(() => L.set(L.attrsOr(L.negate, {x: L.add(1)}), {}, {x: 1, y: 2}), {})
+  testEq(() => L.set(L.attrsOr(L.defaults(0), {}), {x: 0}, {}), {})
+})
+
+describe('L.attrs', () => {
+  testEq(() => L.get(L.attrs({x: L.zero}), 'not an object'), undefined)
+  testEq(() => L.get(L.attrs({x: L.negate}), {}), {})
+  testEq(() => L.get(L.attrs({x: L.negate}), {y: 1}), {})
+  testEq(() => L.get(L.attrs({x: L.negate}), {x: 1, y: 2}), {x: -1})
+  testEq(() => L.set(L.attrs({x: L.negate}), {y: 1}, {y: 2}), {y: 2})
+  testEq(() => L.set(L.attrs({x: L.negate}), {}, {}), {})
+  testEq(() => L.remove(L.attrs({x: L.negate}), {x: 1}), undefined)
+  testEq(
+    () =>
+      L.get(L.attrs({meta: {file: [], ext: []}}), {
+        meta: {file: './foo.txt', base: 'foo', ext: 'txt'}
+      }),
+    {meta: {file: './foo.txt', ext: 'txt'}}
+  )
+})
+
+describe('L.object', () => {
+  testEq(() => L.get(L.object(L.filter(x => x < 0)), {x: [1], y: [1, -1]}), {
+    x: [],
+    y: [-1]
+  })
+  testEq(
+    () =>
+      L.set(L.object(L.filter(x => x < 0)), {y: [-2]}, {x: [1], y: [1, -1]}),
+    {x: [1], y: [-2, 1]}
+  )
 })
 
 describe('L.props', () => {
@@ -1142,6 +1206,64 @@ describe('L.props', () => {
     'b',
     'y'
   ])
+})
+
+describe('L.attrsNamed', () => {
+  testEq(() => L.remove(L.attrsNamed('x', 'y'), {x: 1, y: 2, z: 3}), {z: 3})
+  testEq(() => L.set(L.attrsNamed('x', 'y'), {}, {x: 1, y: 2, z: 3}), {z: 3})
+  testEq(() => L.set(L.attrsNamed('x', 'y'), {y: 4}, {x: 1, y: 2, z: 3}), {
+    y: 4,
+    z: 3
+  })
+
+  for (const maybeInverse of [R.identity, L.inverse]) {
+    testEq(
+      () => L.get(maybeInverse(L.attrsNamed('x', 'y')), {x: 1, y: 2, z: 3}),
+      {
+        x: 1,
+        y: 2
+      }
+    )
+    testEq(() => L.get(maybeInverse(L.attrsNamed('x', 'y')), {z: 3}), {})
+    testEq(() => L.get(maybeInverse(L.attrsNamed('x', 'y')), {x: 2, z: 3}), {
+      x: 2
+    })
+    testEq(
+      () => L.remove(maybeInverse(L.attrsNamed('x', 'y')), {x: 1, y: 2}),
+      undefined
+    )
+    testEq(
+      () => L.set(maybeInverse(L.attrsNamed('x', 'y')), {}, {x: 1, y: 2}),
+      {}
+    )
+    testEq(
+      () => L.set(maybeInverse(L.attrsNamed('x', 'y')), {y: 4}, {x: 1, y: 2}),
+      {
+        y: 4
+      }
+    )
+    testEq(
+      () => L.remove(maybeInverse(L.attrsNamed('x', 'y')), {x: 1, y: 2}),
+      undefined
+    )
+    testEq(
+      () => L.set(maybeInverse(L.attrsNamed('a', 'b')), {a: 2}, {a: 1, b: 3}),
+      {
+        a: 2
+      }
+    )
+    testEq(
+      () =>
+        I.keys(
+          L.get(maybeInverse(L.attrsNamed('x', 'b', 'y')), {b: 1, y: 1, x: 1})
+        ),
+      ['x', 'b', 'y']
+    )
+  }
+})
+
+describe('L.attrsOf', () => {
+  testEq(() => L.get(L.attrsOf({x: 0, y: 0}), {x: 1, y: 2, z: 3}), {x: 1, y: 2})
 })
 
 describe('L.assign', () => {

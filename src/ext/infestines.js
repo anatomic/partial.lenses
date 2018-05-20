@@ -2,6 +2,8 @@ import * as I from 'infestines'
 
 export * from 'infestines'
 
+export const ignore = _ => {}
+
 export const addU = (x, y) => x + y
 export const multiplyU = (x, y) => x * y
 

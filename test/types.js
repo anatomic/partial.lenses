@@ -331,6 +331,11 @@ export const suffix = T.fn([T_sliceIndex], T_lens)
 
 // Lensing objects
 
+export const attrs = T.fn([template(T_lens)], T_lens)
+export const attrsNamed = T.fnVarN(0, T.string, T_lens)
+export const attrsOf = T.fn([T.instanceOf(Object)], T_lens)
+export const attrsOr = T.fn([T_lens, template(T_lens)], T_lens)
+export const object = T.fn([T_lens], T_lens)
 export const pickIn = T.fn([template(T_lens)], T_lens)
 export const prop = T.fn([T.string], T_lens)
 export const props = T.fnVarN(0, T.string, T_lens)
